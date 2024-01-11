@@ -18,9 +18,35 @@
     <img src="blinkschematic.jpg" />
     <p>This is the schematic for the circuit. Each of the pins (P7, P8, P9) emit 5V when actvated. All three LEDs have a votalge drop of 1.8V.
       In order to limit the current to be around 20 mA, each LED is paired with a 220 Ohm resistor. This is because V = I * R, so
-      (5 - 1.8) = 0.02 * R resulting in R = 160. So the ideal resistor to reach 20 mA of current is 160 Ohms, but since the kit I used does
+      (5 - 1.8) = 0.02 * R results in R = 160. Therefore the ideal resistor to reach 20 mA of current is 160 Ohms, but since the kit I used does
       not have a resisitor of that value, I used the next closest one of a greater value, since that would guarantee that the current at least
       will not exceed 20 mA. Below is an image of my circuit.
+    </p>
+    <hr>
+    <p>
+      // the setup function runs once when you press reset or power the board
+      void setup() {
+      // initialize digital pins 7, 8, 9 as an output.
+      pinMode(red, OUTPUT);
+      pinMode(green, OUTPUT);
+      pinMode(blue, OUTPUT);
+    }
+
+    // the loop function runs over and over again forever
+    void loop() {
+      digitalWrite(7, HIGH);  // turn the 7 pin LED on (HIGH is the voltage level)
+      delay(1000);                      // wait for a second
+      digitalWrite(7, LOW);   // turn the 7 pin LED off by making the voltage LOW
+      delay(1000);                      // wait for a second 
+      digitalWrite(8, HIGH);  // turn the 8 pin LED on (HIGH is the voltage level)
+      delay(1000);                      // wait for a second
+      digitalWrite(8, LOW);   // turn the 8 pin LED off by making the voltage LOW
+      delay(1000);                      // wait for a second 
+      digitalWrite(9, HIGH);  // turn the 9 pin LED on (HIGH is the voltage level)
+      delay(1000);                      // wait for a second
+      digitalWrite(9, LOW);   // turn the 9 pin LED off by making the voltage LOW
+      delay(1000);                      // wait for a second 
+    }
     </p>
   </body>
 </html>
