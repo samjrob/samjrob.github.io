@@ -23,6 +23,11 @@
       will not exceed 20 mA. Below is an image of my circuit.
     </p>
     <img src="circuitpic.jpg">
+    <p>The three LEDs are all powered with their own indivdual red wire, which connects to either pin 7, 8, or 9.
+      Every LED is in line with a 220 Ohm resistor which comes before the LED in the circut, although it would
+      still work if the resistor was after the LED. All three LED circuits are connected to the interconnected blue bar
+      at the edge of the bread board, and the blue bar is then connected to the ground of the Arduino.
+    </p>
     <hr>
     <p>
     // the setup function runs once when you press reset or power the board
@@ -53,7 +58,7 @@
     <img src="blink.gif" class="center">
     <p><center>Final Circuit in action!</center></p>
     <hr>
-    <img src="blinkvolatgegraph.jpg", class="center">
+    <img src="blinkvolatgegraph2.jpg", class="center">
     <p> If you utilized all 13 digital pins on the Arduino you could have 13 different LEDs blink independantly. The amount
       of current that this would draw would be equal to #LEDs that are on times (5 - voltage drop) / resisitance. Assuming
       it was all red LEDs with resistors matching the ones I used (1.8 voltage drop and 220 Ohms), if all 13 happened to be 
