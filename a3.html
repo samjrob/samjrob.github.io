@@ -22,22 +22,22 @@
     <hr>
     <img src="A3Schematic.png" />
     <p>
-      This is the schemattic for the circuit. My circuit utilizes the a seven segment display to show numbers 
+      This is the schematic for the circuit. My circuit utilizes the a seven segment display to show numbers 
       but only six of the segments are needed to display 4, 3, and 9, so only 6 of the segments LEDs are 
       wired. A voltage divider is used as a means of getting readable input from the photoresistor. As it gets 
       darker around the photoresistor and its resisitance increases, the A0 pin reads lower values of voltage after the first resistor.
+      A 10k resistor is used because it roughly matches the max resistance of the photoresistor, which will then give the voltage divider 
+      conisistent values between roughly 5 and 2.5V.
       For each of the red LEDs they are all wired in series with a 220 ohm resistor to limit the current to close to 20 mA 
       (3.2/0.02). All LEDs are grounded through the grounding prong of the seven segment display. <br>
       Below is an image of the circuit.
     </p>
     <img src="A3pic.jpg">
     <p>
-      The button part of circuit receives voltage from power on the Arduino board. A blue wire branches
-      off after the button into pin 2, and a black wire goes to ground placed after a resistor. For the
-      three LEDs, they are all connected to either pin 3, 4, or 10 by a red wire. They are in line with
-      either a 220 ohm or 100 ohm resistor (depending on the voltage drop of the LED) to reduce the current.
-      All three LEDs are then connected to the blue grounding bar on the breadboard by black wires, 
-      which is connected to the ground on the Arduino board.
+      All of the pins are wired into the seven segment display through an in series resistor to limit the current into the LEDs. All 
+      of which are then grounded through the top gorunding prong and connected to the blue grounded bar. The voltage divider reads the 
+      voltage between the photoresistor and a 10k resisitor through the blue wire. The divider is also grounded through the blue bar
+      which is connected to ground on the Arduino. The divider is powered with 5 volts from the Arduino board.
     </p>
     <hr>
     <p>
@@ -119,7 +119,7 @@
       and V out is 3.3. Either resistor can be varible but it important to keep track of how the relationship between the 
       readings and the resistance changes depending on which is varible.
     </p>
-    <img src="fadeQ1.png" />
+    <img src="A3Q2.png" />
     <p>
       3. Changing the bits would change the range at which the values have to be mapped. Increasing the bits means that the 
       numbers can lay in a bigger range. So instead of map(analogRead(A0), 0, 1023, 0, 255) for 8 and 10 bit values, we would 
