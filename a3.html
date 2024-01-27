@@ -11,24 +11,26 @@
   <body>
     <h1>Sam Roberts' Assignment 3: Input/Output!</h1>
     <div class="header">
-      <img src="fadegif.gif" />
-      <p>Here is all the documentation Input/Output! I was assigned to build and code an Arduino circuit that
-        would cause multiple LEDs to light up when a button is pressed, with at least one of the LEDs
-        behavior being fading on and off.
+      <img src="A3.gif" />
+      <p>Here is all the documentation Input/Output! This assignment utilizes a voltage divider and 
+        analogRead/Write to create a circuit which reacts to the enviroment around it. My circuit uses 
+        a photoresistor to detect brightness. As it gets dimmer around the photoresistor the output of 
+        the pins also decreases. The display shows 4, 3, or 9 (HCDE 439) depending on how dark it is around the 
+        photoresistor.
       </p>
     </div>
     <hr>
-    <img src="fadeschematic.png" />
+    <img src="A3Schematic.png" />
     <p>
-      This is the schemattic for the circuit. Pin 2 is set to INPUT and pins 3, 4, and 10 are set to output. 
-      When the button is closed current flows from power towrds pin 2 and ground, since the current has to 
-      either pass through a 10k ohm resisitor or go towrds pin 2, almost all of the current flows towards pin 2 since there is way less resistance. For the 3 LEDs, pins
-      3, 4, and 10 all emit 5 volts so an appropiate resistor is used to limit the current to at or below 
-      20 mA. The red and green LEDs have a voltage drop of 1.8 so a 220 ohm resisitor is used. The blue 
-      LED has a drop of 3.2, so a 100 ohm resistor is used. Ohms law was used to calculate these values. 
+      This is the schemattic for the circuit. My circuit utilizes the a seven segment display to show numbers 
+      but only six of the segments are needed to display 4, 3, and 9, so only 6 of the segments LEDs are 
+      wired. A voltage divider is used as a means of getting readable input from the photoresistor. As it gets 
+      darker around the photoresistor and its resisitance increases, the A0 pin reads lower values of voltage after the first resistor.
+      For each of the red LEDs they are all wired in series with a 220 ohm resistor to limit the current to close to 20 mA 
+      (3.2/0.02). All LEDs are grounded through the grounding prong of the seven segment display. <br>
       Below is an image of the circuit.
     </p>
-    <img src="fadecircuit.jpg">
+    <img src="A3pic.jpg">
     <p>
       The button part of circuit receives voltage from power on the Arduino board. A blue wire branches
       off after the button into pin 2, and a black wire goes to ground placed after a resistor. For the
@@ -39,59 +41,89 @@
     </p>
     <hr>
     <p>
+      int bottom_mid = 9; // initialize pin to associated part of 7-segment display<br>
+      int bottom_right = 6; // initialize pin to associated part of 7-segment display<br>
+      int mid = 11; // initialize pin to associated part of 7-segment display<br>
+      int top_right = 5; // initialize pin to associated part of 7-segment display<br>
+      int top_left = 10; // initialize pin to associated part of 7-segment display<br>
+      int top_mid = 3; // initialize pin to associated part of 7-segment display<br>
+      int output = 0; // output value for pins<br>
+      int senMax = 0; // max value of analogRead during calbration<br>
+      int senMin = 1023; // min value of analogRead during calbration<br>
+      int senVal = 0; // value read from sensor<br>
+      int number_choose = 0; // Determines which number to show on display<br>
+      <br>
       void setup() {<br>
         // put your setup code here, to run once:<br>
-        pinMode(2, INPUT);  // Activates pin 2 to detect input Voltage<br>
-        pinMode(3, OUTPUT);  // Activates pin 3 to output Voltage<br>
-        pinMode(4, OUTPUT);  // Activates pin 4 to output Voltage<br>
-        pinMode(10, OUTPUT);  // Activates pin 10 to output Voltage<br>
+        pinMode(bottom_mid, OUTPUT); // Set 7 segment display pins to output<br>
+        pinMode(bottom_right, OUTPUT); // Set 7 segment display pins to output<br>
+        pinMode(mid, OUTPUT); // Set 7 segment display pins to output<br>
+        pinMode(top_right, OUTPUT); // Set 7 segment display pins to output<br>
+        pinMode(top_left, OUTPUT); // Set 7 segment display pins to output<br>
+        pinMode(top_mid, OUTPUT); // Set 7 segment display pins to output<br>
+        Serial.begin(9600); // Begin serial to print to serial monitor<br>
+        Serial.println("Start"); // Print start when calibration begins<br>
+        while (millis() < 5000) { // For 5 sec after bootup<br>
+          senVal = analogRead(A0); // Read value from voltage divider<br>
+          if (senVal > senMax) { // Checks if value is max yet detected<br>
+            senMax = senVal; // Sets max recored value to senor value<br>
+          }<br>
+          if (senVal < senMin) { // Checks if value is min yet detected<br>
+            senMin = senVal; // Sets min recored value to senor value<br>
+          }<br>
+        }<br>
+        senMin += 10; // Adds 10 max to cushion to value to make sure can turn all the way off<br>
+        senMax -= 10; // Subtracts 10 min to cushion to value to make sure can turn all the way on<br>
+        Serial.println("End"); // Print end when calibration ends<br>
       }<br>
       <br>
       void loop() {<br>
         // put your main code here, to run repeatedly:<br>
-        while (digitalRead(2) == HIGH) {  // Checks if the button is pressed<br>
-          for (int i = 0; i <= 255; i++) {  // Increases value of analogWrite by 1 per iteration to have it slowly change brightness<br>
-            analogWrite(3, i); // Sets value for pin 3 to i<br>
-            analogWrite(10, (255 - i)); // Set value for pin 10, value the inverse of pin 3<br>
-            if (i % 50 == 0) {  // Checks if i is currently a mutiple of 50, the number determines how fast the light blinks, lower is faster<br>
-              if ((i / 50) % 2 == 1) {  // Checks if i is a negative multiple <br>
-                digitalWrite(4, HIGH);  // Sets pin 4's output to high<br>
-              }<br>
-              else if ((i / 50) % 2 == 0) {  // Checks if i is a positive multiple<br>
-                digitalWrite(4, LOW);  // Sets pin 4's ooutput to low<br>
-              }<br>
-            }<br>
-            delay(10);  // Waits 10 milliseconds<br>
-          }<br>
-          for (int i = 255; i >= 0; i--) {  // Iterates i down from 255 by 1 per iteration<br>
-            analogWrite(3, i);  // Sets value for pin 3 to i<br>
-            analogWrite(10, (255 - i));  // Set value for pin 10, value the inverse of pin 3<br>
-            if (i % 50 == 0) {  // Checks if i is currently a mutiple of 50, the number determines how fast the light blinks, lower is faster<br>
-              if ((i / 50) % 2 == 1) {  // Checks if i is a negative multiple <br>
-                digitalWrite(4, HIGH);  // Sets pin 4's output to high<br>
-              }<br>
-              else if ((i / 50) % 2 == 0) {  // Checks if i is a positive multiple<br>
-                digitalWrite(4, LOW);  // Sets pin 4's ooutput to low<br>
-              }<br>
-            }<br>
-            delay(10);  // Waits 10 milliseconds<br>
-          }<br>
+        number_choose = map(analogRead(A0), senMin, senMax, 0, 2); // Split range of recorded values into thirds<br>
+        number_choose = constrain(number_choose, 0 ,2); // Constrains the output of mapping to between 0 and 2<br>
+        output = map(analogRead(A0), senMin, senMax, 0, 255); // Maps output to 0 to 255 for analogWrite<br>
+        if (number_choose == 2) { // If output is in the highest third, dispaly a 4<br>
+          analogWrite(top_left, constrain(output, 0, 255)); // Light LEDs needed to display a 4 and set others to 0.<br>
+          analogWrite(top_mid, 0); // Example of LED set to off<br>
+          analogWrite(top_right, constrain(output, 0, 255)); // All lit LEDs are brighter with higher values read and cosntrained between 0 and 255<br>
+          analogWrite(mid, constrain(output, 0, 255));<br>
+          analogWrite(bottom_right, constrain(output, 0, 255));<br>
+          analogWrite(bottom_mid, 0);<br>
+        } else if (number_choose == 1) { // If output is in the middle third, dispaly a 3<br>
+          analogWrite(top_left, 0); // Light and turn off LEDs to show a 3, lights behave the same as the 4<br>
+          analogWrite(top_mid, constrain(output, 0, 255));<br>
+          analogWrite(top_right, constrain(output, 0, 255));<br>
+          analogWrite(mid, constrain(output, 0, 255));<br>
+          analogWrite(bottom_right, constrain(output, 0, 255));<br>
+          analogWrite(bottom_mid, constrain(output, 0, 255));<br>
+        } else { // If output is in the middle third, dispaly a 9<br>
+          analogWrite(top_left, constrain(output, 0, 255)); // Light and turn off LEDs to show a 9, lights behave the same as the 4 and 3<br>
+          analogWrite(top_mid, constrain(output, 0, 255));<br>
+          analogWrite(top_right, constrain(output, 0, 255));<br>
+          analogWrite(mid, constrain(output, 0, 255));<br>
+          analogWrite(bottom_right, constrain(output, 0, 255));<br>
+          analogWrite(bottom_mid, 0);<br>
         }<br>
-        analogWrite(3, 0);  // Turns off pin 3 once button is released<br>
-        digitalWrite(4, LOW);  // Turns off pin 4 once button is released<br>
-        analogWrite(10, 0);  //  Turns off pin 10 once button is released<br>
       }
     </p>
-    <img src="fadegif.gif" class="center">
+    <img src="A3.gif" class="center">
     <p><center>Final Circuit in action!</center></p>
     <hr>
     <hr>
+    <p>
+      1. For a voltage divider to work the varible resistor can be either R1 or R2. The equation
+      for V out (R2 / (R1 + R2)) * V in shows that the voltage out is just the percentage of total resistance from R2 times 
+      the input voltage. If we had 5 volts in and R1 of 50 and R2 of 50, the equation would give 50/100 * 5 = 2.5, which 
+      makes sense since R2 is 50% of the resistance and V in is 5. If R1 is varible and becomes 100, R2 is now only 33%
+      of the total resistance so V out = 1.65. Now if R2 is varible and becoems 100 it accounts for 66% of the resisitance
+      and V out is 3.3. Either resistor can be varible but it important to keep track of how the relationship between the 
+      readings and the resistance changes depending on which is varible.
+    </p>
     <img src="fadeQ1.png" />
     <p>
-      Assuming only the LEDs are drawing current, a 1200 mAh battery could power my circuit for about 
-      25.5 hours. This is because the red and green LEDs drain 14.5 mA each (3.2/220), and the blue LED
-      drains 18 mA (1.8/100). This means the circuit in total drains 47 mA. A 1200 mAh battery can supply
-      1200 mA for one hour, so it can supply 47 mA for at least 25.5 hours (1200/47).
+      3. Changing the bits would change the range at which the values have to be mapped. Increasing the bits means that the 
+      numbers can lay in a bigger range. So instead of map(analogRead(A0), 0, 1023, 0, 255) for 8 and 10 bit values, we would 
+      have to write map(analogRead(A0), 0, 65536, 0, 1023) for 10 and 16 bit values.
     </p>
   </body>
 </html>
