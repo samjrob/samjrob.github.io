@@ -44,14 +44,14 @@
     </p>
     <hr>
     <p>
-    #include <CapacitiveSensor.h> // Include capacitive sensor library
-    CapacitiveSensor cs_4_2 = CapacitiveSensor(4,2); //initalize a cpacitive sensor with pins 4 and 2
-    int lampState = 0; // 0 is off, 1 is on
-    int timeMax = 0; // Maximum time it takes for capacitor to discharge
-    int timeMin = 1000; // Minimum time
-    long prevTotal = 0; // Previous capacitive sensor reading
-
-    void setup() {
+    #include <CapacitiveSensor.h> // Include capacitive sensor library<br>
+    CapacitiveSensor cs_4_2 = CapacitiveSensor(4,2); //initalize a cpacitive sensor with pins 4 and 2<br>
+    int lampState = 0; // 0 is off, 1 is on<br>
+    int timeMax = 0; // Maximum time it takes for capacitor to discharge<br>
+    int timeMin = 1000; // Minimum time<br>
+    long prevTotal = 0; // Previous capacitive sensor reading<br>
+    <br>
+    void setup() {<br>
       // put your setup code here, to run once:<br>
       pinMode(9, OUTPUT); // Set nine to output, this pin will be used to control the transistor<br>
       analogWrite(9, 0); // Set the pin to no output<br>

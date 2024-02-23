@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, maximum-scale=1.0" />
+
+    <title>Sam Roberts' HCDE 439 Physical Computing Page!</title>
+
+    <link href="style.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+    <h1>Sam Roberts' Assignment 6: Talking to the Web!</h1>
+    <div class="header">
+      <img src="A6.gif" />
+      <p>Here is all the documentation for Talking to the Web! For this assignment I was requried to 
+        utilize my arduino and p5js to build a circuit and program that could influence each other. The 
+        arduino has two inputs which affect the screen and interacting with the screen lights an LED.
+      </p>
+    </div>
+    <hr>
+    <img src="a6schematic.png" />
+    <p>
+      This is the schematic for the circuit. The schematic has two distinct parts. The left is the output for 
+      interacting with the computer screen, and the right is the input for affecting what is shown on 
+      the screen. The left is an LED controlled by pin 2, it is writed in series with a 220 ohm resistor 
+      to limit the current to around 20 mA. Red LED means (5 - 1.8)/0.02 = 160, so a 220 will always keep 
+      the current below 20 mA. The right shows the joystick, which uses to potentiometers to measure 
+      the x and y direction. Since the varible resistor can go from 0 to 10K ohms, the second resistor 
+      can go from 0 to 50% of the total resistance, so the A0 or A2 ports will typically read values from 
+      512 to 1023, but calibration is used to get a more precises mapping. The potentiometers are grounded 
+      together and serperatly from the LED.<br>
+      Below is an image of the circuit.
+    </p>
+    <img src="A6circuit.jpg">
+    <p>
+      The circuit is divided up into two main parts, the LED, which serves as the output for interacting with 
+      the computer screen, and the Joystick, which serves as an input device for manipulating what is 
+      displayed on the screen. The LED is wrired in line with a resistor to limit the current. The Joystick 
+      is plugged directly into power and ground, with A0 wired to X movements and A2 wrired to Y.
+    </p>
+    <hr>
+    <p>
+      Arduino Code:<br>
+      int x_input = 0; // Valuve from X axis to be sent to computer<br>
+      int y_input = 0; // Valuve from Y axis to be sent to computer<br>
+      int senVal = 0; // Value read from sensor<br>
+      int senMax = 0; // Max value from calibration<br>
+      int senMin = 1023; // Min value from calibration<br>
+      int computer_input = 0; // Input from computer, 0 is LED OFF and 1 is ON<br>
+      <br>
+      void setup() {<br>
+        // put your setup code here, to run once:<br>
+        Serial.begin(9600); // Start Serial<br>
+        pinMode(2, OUTPUT); // Set pin 2 to Output<br>
+        while (millis() < 5000) { // For first 5 seconds after bootup<br>
+          senVal = analogRead(A0); // Read X value from joystick<br>
+          if (senVal > senMax) { // If read valuse is greater than current max<br>
+            senMax = senVal; // Set max to current value<br>
+          }<br>
+          if (senVal < senMin) { // If read valuse is less than current min<br>
+            senMin = senVal; // Set min to current value<br>
+          }<br>
+        }<br>
+      }<br>
+      <br>
+      void loop() {<br>
+        // put your main code here, to run repeatedly:<br>
+        x_input = analogRead(A0); // Read x values from joystick<br>
+        x_input = map(x_input, senMin, senMax, -90, 90); // map to values for computer using calibration data<br>
+        x_input = constrain(x_input, -90, 90); // constrain<br>
+        y_input = analogRead(A2); // Read y values from joystick<br>
+        y_input = map(y_input, senMin, senMax, 50, 150); // map to values for computer using calibration data<br>
+        y_input = constrain(y_input, 50, 150); // constrain<br>
+        Serial.println((String(x_input) + "," + String(y_input))); // Send x and y inputs to computer<br>
+        computer_input = Serial.read(); // Read serial input from computer<br>
+        if (computer_input == 0) { // If sent signal is 0<br>
+          digitalWrite(2, LOW); // Turn off LED<br>
+        } else { // Sent signal is 1<br>
+          digitalWrite(2, HIGH); // Turn on LED<br>
+        }<br>
+        delay(50); // Delay 50 milliseconds<br>
+      }<br>
+      <br>
+      <br>
+      p5js Code:<br>
+      const BAUD_RATE = 9600; // This should match the baud rate in your Arduino sketch<br>
+      <br>
+      let port, connectBtn; // Declare global variables<br>
+      let value = 0; // Declare value sent to Arduino<br>
+      <br>
+      function setup() {<br>
+        setupSerial(); // Run our serial setup function (below)<br>
+        <br>
+        // Create a canvas that is the size of our browser window.<br>
+        // windowWidth and windowHeight are p5 variables<br>
+        createCanvas(windowWidth, windowHeight);<br>
+      }<br>
+      <br>
+      function draw() {<br>
+        const portIsOpen = checkPort(); // Check whether the port is open (see checkPort function below)<br>
+        if (!portIsOpen) return; // If the port is not open, exit the draw loop<br>
+        <br>
+        let str = port.readUntil("\n"); // Read from the port until the newline<br>
+        if (str.length == 0) return; // If we didn't read anything, return.<br>
+        <br>
+        let arr = str.trim().split(","); // Split input into list of values sent<br>
+        <br>
+        translate(windowWidth / 2, windowHeight / 2); // Move center of canvas to center of screen<br>
+        background(244, 248, 252); // light blue background<br>
+        angleMode(DEGREES); // Set angle to degrees<br>
+        rotate(int(arr[0])); // Rotate shapes by first value in input list<br>
+        triangle(-1  * float(arr[1]), 0, 1 * float(arr[1]), 0, 0, -1.5 * float(arr[1])); // Draw a trangle scaled tp second value in input list<br>
+        circle(0, 0, 2 * float(arr[1])); // Draw a circle scaled to second value in input list<br>
+        port.write(value) // Write the currnent value to the arduino<br>
+      }<br>
+      <br>
+      // Three helper functions for managing the serial connection.<br>
+      <br>
+      function setupSerial() {<br>
+        port = createSerial();<br>
+        <br>
+        // Check to see if there are any ports we have used previously<br>
+        let usedPorts = usedSerialPorts();<br>
+        if (usedPorts.length > 0) {<br>
+          // If there are ports we've used, open the first one<br>
+          port.open(usedPorts[0], BAUD_RATE);<br>
+        }<br>
+        <br>
+        // create a connect button<br>
+        connectBtn = createButton("Connect to Arduino");<br>
+        connectBtn.position(5, 5); // Position the button in the top left of the screen.<br>
+        connectBtn.mouseClicked(onConnectButtonClicked); // When the button is clicked, run the onConnectButtonClicked function<br>
+      }<br>
+      <br>
+      function checkPort() {<br>
+        if (!port.opened()) {<br>
+          // If the port is not open, change button text<br>
+          connectBtn.html("Connect to Arduino");<br>
+          // Set background to gray<br>
+          background("gray");<br>
+          return false;<br>
+        } else {<br>
+          // Otherwise we are connected<br>
+          connectBtn.html("Disconnect");<br>
+          <br>
+          return true;<br>
+        }<br>
+      }<br>
+      <br>
+      function onConnectButtonClicked() {<br>
+        // When the connect button is clicked<br>
+        if (!port.opened()) {<br>
+          // If the port is not opened, we open it<br>
+          port.open(BAUD_RATE);<br>
+        } else {<br>
+          // Otherwise, we close it!<br>
+          port.close();<br>
+        }<br>
+      }<br>
+      <br>
+      function mouseClicked() { // Runs when the mouse is clicked<br>
+        if (value === 0) { // If value is 0<br>
+          value = 1; // Set to 1<br>
+        } else { // Value is 1<br>
+          value = 0; // Set to 0<br>
+        }<br>
+      }
+    </p>
+    <hr>
+    <img src="A6.gif" class="center">
+    <p><center>Final Circuit in action!</center></p>
+  </body>
+</html>
