@@ -12,3 +12,358 @@
     <h1>Sam Roberts' Final Project: Memory Master!</h1>
     <div class="header">
       <img src="finalproposal.png" />
+      <p>Memory master is a fully fledged memory game which utilizes random blinking lights on an arduino, 
+        capactitive touch sensors, and p5.js to offer a comeplete experience similar to products such as 
+        Simon Says. When the arduino boots up it has the user calibrate the capactitive touch sensors, then 
+        the arduino generates a list of three random lights to blink. After tese lights are blinked the user 
+        is tasked with replacating the same order by touching the lights cooresponding buttons. After every 
+        successful sequence match the length of the sequence increases by one. There is no cap on how long 
+        the list can be. Everytime an LED blinks, whether showing the pattern or from user input, the p5.js 
+        website displays the color that blinked and plays a corresponding tone. If the user fails the screen 
+        shows a "Lose" screen the the player score is set to 0 and the sequence length is returned to 3. 
+        If the player successfully matches the seuqence they get a "Win" screen and their score is increased. 
+        If the player score exceeds the current high score it becomes the high score, which is constantly 
+        displayed on the p5.js. Additonally the p5.js has looping background music.
+      </p>
+      <hr>
+      <img src="MMschematic.png" />
+      <p>The arduino schematic is has two main parts, the capactivie touch sensors and the LEDs. The capacitive 
+        touch circuit uses two pins which are determined in the capacitive sensor setup in the code. There is a 
+        1 M ohm inbetween the two pins to discourage current from flowing from one pin to another, and instead 
+        have the current charge the half a capacitor used for the touch sensor. The LEDs are wired to pins 2 - 5 
+        and are in line with reisitors to limit the current to less than 20 mA. For the Red, yellow, and green LEDs 
+        with 1.8 V drop, 220 ohm resisitors are used because (5-1.8) = 0.02 * R so R = 160 and 220 is the 
+        next closest resistor. For the blue LED with a drop of 3.2 100 ohm resistors are used because 
+        (5-3.2) = 0.02 * R so R = 90 and 100 is the next closest resistor.
+      </p>
+      <hr>
+      <img src="MMcircuit.jpg" />
+      <p>This is the circuit built with the schematic. The circuit uses 4 LEDs, 4 1M ohm resistors, 
+        3 220 ohm resistors, 1 100 ohm reisitor, 4 alligator clips, 4 pennies (for capacitors), wires, 
+        an arduino, and a breadboard. The LEDs are wired to pins 2 through 5 and all grounded in the arduino 
+        ground. The capacitive sensors use two pins each, paired off in twos from 6 through 13. Pennies are 
+        alligator clipped to the circuit to serve as half capacitors for touch sensing.
+      </p>
+      <hr>
+      <p>Arduino Code:<br>
+        #include <CapacitiveSensor.h> // Include capacitive sensor library<br>
+          <br>
+          // Initialze all capacitors, labelled with associated pins used<br>
+          CapacitiveSensor cs_7_6_red = CapacitiveSensor(7,6);<br>
+          CapacitiveSensor cs_9_8_green = CapacitiveSensor(9,8);<br>
+          CapacitiveSensor cs_11_10_blue = CapacitiveSensor(11,10);<br>
+          CapacitiveSensor cs_13_12_yellow = CapacitiveSensor(13,12);<br>
+          <br>
+          int sequence_len = 3; // Amount of LEDs that blink before user input<br>
+          long randNum; // Random value<br>
+          long answer; // Value the user has to match with user_input<br>
+          int user_input; // Users input<br>
+          long prevRed = 0; // Previous read in value for the red LED capacitive sensor<br>
+          long prevGreen = 0; // Previous read in value for the green LED capacitive sensor<br>
+          long prevBlue = 0; // Previous read in value for the blue LED capacitive sensor<br>
+          long prevYellow = 0; // Previous read in value for the yellow LED capacitive sensor<br>
+          int timeMax = 0; // Maximum time it takes for capacitor to discharge<br>
+          int timeMin = 1000; // Minimum time<br>
+          int score = 0; // Current user score<br>
+          int high_score = 0; // Best user score<br>
+          <br>
+          void setup() {<br>
+            // put your setup code here, to run once:<br>
+            Serial.begin(9600); // Begin the serial monitor<br>
+            pinMode(2, OUTPUT); // Set pin 2 to output<br>
+            pinMode(3, OUTPUT); // Set pin 3 to output<br>
+            pinMode(4, OUTPUT); // Set pin 4 to output<br>
+            pinMode(5, OUTPUT); // Set pin 5 to output<br>
+            <br>
+            // Set the capacitors<br>
+            cs_7_6_red.set_CS_AutocaL_Millis(0xFFFFFFFF);<br>
+            cs_9_8_green.set_CS_AutocaL_Millis(0xFFFFFFFF);<br>
+            cs_11_10_blue.set_CS_AutocaL_Millis(0xFFFFFFFF);<br>
+            cs_13_12_yellow.set_CS_AutocaL_Millis(0xFFFFFFFF);<br>
+            <br>
+            digitalWrite(2, HIGH); // Signify start of calibration<br>
+            while (millis() < 5000) { // For the first 5 seconds after bootup<br>
+              long total1 = cs_7_6_red.capacitiveSensor(30); // Read time to discharge capacitor<br>
+              if (total1 > timeMax) { // If recorded value is greater than the highest value recorded so far<br>
+                timeMax = total1; // Set recorded value to be the maximum<br>
+              }<br>
+              if (total1 < timeMin) { // If recorded value is less than the lowest value recorded so far<br>
+                timeMin = total1; // Set recorded value to be the minimum<br>
+              }<br>
+            }<br>
+            digitalWrite(2, LOW); // Signify end<br>
+            delay(200); // Delay before beginning game<br>
+          }<br>
+          <br>
+          void loop() {<br>
+            // put your main code here, to run repeatedly:<br>
+            long sequence[sequence_len]; // Initalize array for blinking<br>
+            for (int i = 0; i < sequence_len; i++) { // Iterate i by the sequence length<br>
+              randNum = random(2, 6); // Generate a random number between 2 and 5<br>
+              sequence[i] = randNum; // Set the ith value of the array to the random number<br>
+              blink(int(randNum), 500); // Blink the associated LED with 500 milli delay<br>
+            }<br>
+            <br>
+            for (int i = 0; i < sequence_len; i++) { // For each value in the sequence array<br>
+              answer = sequence[i]; // Answer looking for is equal to ith value of array<br>
+              while(true) { // Loop until reads a break statement<br>
+                long totalRed = cs_7_6_red.capacitiveSensor(30); // Get capacitive sensor reading<br>
+                totalRed = map_and_constrain(totalRed); // Map and contrain the reading to 0 to 100<br>
+                long totalGreen = cs_9_8_green.capacitiveSensor(30); // Get capacitive sensor reading<br>
+                totalGreen = map_and_constrain(totalGreen); // Map and contrain the reading to 0 to 100<br>
+                long totalBlue = cs_11_10_blue.capacitiveSensor(30); // Get capacitive sensor reading<br>
+                totalBlue = map_and_constrain(totalBlue); // Map and contrain the reading to 0 to 100<br>
+                long totalYellow = cs_13_12_yellow.capacitiveSensor(30); // Get capacitive sensor reading<br>
+                totalYellow = map_and_constrain(totalYellow); // Map and contrain the reading to 0 to 100<br>
+                if (totalRed > 50 && prevRed <= 50) { // If the red capacitive sensor detects an increase from the min above 50% and the previous reading wasnt above<br>
+                  user_input = 2; // Set user input to 2<br>
+                  blink(user_input, 250); // Blink the red LED with a delay of 250 milli<br>
+                  prevRed = totalRed; // Set current red value to previous red<br>
+                  break; // Break from while loop<br>
+                } else if (totalGreen > 50 && prevGreen <= 50) { // If the green capacitive sensor detects an increase from the min above 50% and the previous reading wasnt above<br>
+                  user_input = 3; // Set user input to 3<br>
+                  blink(user_input, 250); // Blink the green LED with a delay of 250 milli<br>
+                  prevGreen = totalGreen; // Set current green value to previous green<br>
+                  break; // Break from while loop<br>
+                } else if (totalBlue > 50 && prevBlue <= 50) { // If the blue capacitive sensor detects an increase from the min above 50% and the previous reading wasnt above<br>
+                  user_input = 4; // Set user input to 4<br>
+                  blink(user_input, 250); // Blink the blue LED with a delay of 250 milli<br>
+                  prevBlue = totalBlue; // Set current blue value to previous blue<br>
+                  break; // Break from while loop<br>
+                } else if (totalYellow > 50 && prevYellow <= 50) { // If the yellow capacitive sensor detects an increase from the min above 50% and the previous reading wasnt above<br>
+                  user_input = 5; // Set user input to 5<br>
+                  blink(user_input, 250); // Blink the yellow LED with a delay of 250 milli<br>
+                  prevYellow = totalYellow; // Set current yellow value to previous yellow<br>
+                  break; // Break from while loop<br>
+                }<br>
+                prevRed = totalRed; // Set current red value to previous red<br>
+                prevGreen = totalGreen; // Set current green value to previous green<br>
+                prevBlue = totalBlue; // Set current red value to previous blue<br>
+                prevYellow = totalYellow; // Set current yellow value to previous yellow<br>
+              }<br>
+              if (user_input != int(answer)) { // If user input does not equal the answer<br>
+                delay(200); // Delay 200 milli<br>
+                lose(); // Run the lose function<br>
+                break; // Break from for loop and restart loop()<br>
+              }<br>
+            }<br>
+            if (sequence_len != 2) { // If the user didnt just lose<br>
+              delay(200); // Delay 200 milli<br>
+              win(); // Run the win function<br>
+            }<br>
+            sequence_len += 1; // Increase the sequence length by one<br>
+            delay(300); // Delay 300 milli before starting next round<br>
+          }<br>
+          <br>
+          void blink(int pin, int mil) { // Funcion to blink one LED with varible milli delay<br>
+            Serial.println(pin); // Print pin being lit <br>
+            digitalWrite(pin, HIGH); // Light up pin's associated LED<br>
+            delay(mil); // Delay specified milli<br>
+            digitalWrite(pin, LOW); // Turn off pin's associated LED<br>
+            delay(mil); // Delay specified milli<br>
+          }<br>
+          <br>
+          long map_and_constrain(long total) { // Returns the mapped and constrained sensor reading<br>
+            total = map(total, timeMin, timeMax, 0, 100); // Map the capacitor value to between 0 and 100, utilizing the min and max from calibration<br>
+            total = constrain(total, 0, 100); // Constrain the mapped value<br>
+            return(total); // Retrun the mapped and constrained value<br>
+          }<br>
+          <br>
+          void lose() { // Runs when the player loses<br>
+            Serial.println(6); // Print 6 to signify a loss<br>
+            sequence_len = 2; // Set len to 2 to restart game<br>
+            score = 0; // Set score to 0<br>
+            for (int i = 2; i < 6; i++) { // Iterate through all pins<br>
+              digitalWrite(i, HIGH); // Light up their LEDs<br>
+            }<br>
+            delay(1000); // Delay 1 second<br>
+            digitalWrite(2, LOW); // Turn off outer right LED<br>
+            digitalWrite(5, LOW); // Turn off outer left LED<br>
+            delay(1000); // Delay 1 second<br>
+            digitalWrite(3, LOW); // Turn off inner right LED<br>
+            digitalWrite(4, LOW); // Turn off inner left LED<br>
+            delay(500); // Delay 500 milli<br>
+          }<br>
+          <br>
+          void win() { // When the player wins a round<br>
+            score += 1; // Increase their score by one<br>
+            if (score > high_score) { // If their score is greater than the high score<br>
+              high_score = score; // Set high score to the player's score<br>
+            }<br>
+            Serial.println((high_score + 10)); // Print the score +10 (avoids interfiereing with LED pin number prints)<br>
+            for (int j = 0; j < 2; j++) { // Loop twice<br>
+              for (int i = 2; i < 6; i++) { // Iterate through pin numbers<br>
+                digitalWrite(i, HIGH); // Turn on pin's associated LEDs<br>
+              }<br>
+              delay(500); // delay 500 millis<br>
+              for (int i = 2; i < 6; i++) { // Iterate through pin numbers<br>
+                digitalWrite(i, LOW); // Turn off pin's associated numbers<br>
+              }<br>
+              delay(500); // Delay 500 milli<br>
+            }<br>
+          }<br>
+      <br>
+      P5.js Code:<br>
+      const BAUD_RATE = 9600; // This should match the baud rate in your Arduino sketch<br>
+      <br>
+      let port, connectBtn; // Declare global variables<br>
+      let monoSynth; // Plays noise<br>
+      let mySound; // Loaded mp3 song<br>
+      let h_score = 0; // High score<br>
+      <br>
+      function setup() {<br>
+        setupSerial(); // Run our serial setup function (below)<br>
+        <br>
+        // Create a canvas that is the size of our browser window.<br>
+        // windowWidth and windowHeight are p5 variables<br>
+        createCanvas(windowWidth, windowHeight);<br>
+        <br>
+        // p5 text settings. BOLD and CENTER are constants provided by p5.<br>
+        // See the "Typography" section in the p5 reference: https://p5js.org/reference/<br>
+        textFont("system-ui", 50);<br>
+        textStyle(BOLD);<br>
+        textAlign(CENTER, CENTER);<br>
+        <br>
+        monoSynth = new p5.MonoSynth(); // Initialize a monosynth to play one note<br>
+        mySound = loadSound('Tap Tap Revenge 3 - Tap Tap Domination 100 FC - 1.05 Mil [HQ].mp3'); // Load song<br>
+      }<br>
+      <br>
+      function draw() {<br>
+        const portIsOpen = checkPort(); // Check whether the port is open (see checkPort function below)<br>
+        if (!portIsOpen) return; // If the port is not open, exit the draw loop<br>
+        <br>
+        if (!mySound.isPlaying()) { // If Song is not playing<br>
+          mySound.setVolume(0.1); // Set its volume to low<br>
+          mySound.play(); // Play the song<br>
+        }<br>
+        <br>
+        let str = port.readUntil("\n"); // Read from the port until the newline<br>
+        if (str.length == 0) return; // If we didn't read anything, return.<br>
+        <br>
+        // trim the whitespace (the newline) and convert the string to a number<br>
+        const buttonState = Number(str.trim());<br>
+        <br>
+        // Change text and colors based on button state. In p5, you can set colors<br>
+        // using standard CSS color names as well as many other color formats.<br>
+        if (buttonState === 2) {<br>
+          // If the red LED is lit<br>
+          background("pink"); // Background color<br>
+          fill("red"); // Fill color for the text<br>
+          text("RED", windowWidth / 2, windowHeight / 2); // Position text in center of the screen<br>
+          playSynth('B5'); // Play the note B5<br>
+        } else if (buttonState === 3) {<br>
+          // If the green LED is lit<br>
+          background("lime"); // Background color<br>
+          fill("green"); // Fill color for the text<br>
+          text("GREEN", windowWidth / 2, windowHeight / 2); // Position text in center of the screen<br>
+          playSynth('G4'); // Play the note G4<br>
+        } else if (buttonState === 4) {<br>
+          // If the blue LED is lit<br>
+          background("lightskyblue"); // Background color<br>
+          fill("blue"); // Fill color for the text<br>
+          text("BLUE", windowWidth / 2, windowHeight / 2); // Position text in center of the screen<br>
+          playSynth('E4'); // Play the note E4<br>
+        } else if (buttonState === 5) {<br>
+          // If the yellow LED is lit<br>
+          background("gold"); // Background color<br>
+          fill("yellow"); // Fill color for the text<br>
+          text("YELLOW", windowWidth / 2, windowHeight / 2); // Position text in center of the screen<br>
+          playSynth('C4'); // Play the note C4<br>
+        } else if (buttonState === 6) {<br>
+          // If the player lost<br>
+          background("lightgray"); // Background color<br>
+          fill("gray"); // Fill color for the text<br>
+          text("GAME OVER", windowWidth / 2, windowHeight / 2); // Position text in center of the screen<br>
+          playSynth('G3'); // Play the note G3<br>
+        } else {<br>
+          // If the player won<br>
+          background("lavender"); // Background color<br>
+          fill("purple"); // Fill color for the text<br>
+          text("WINNER!", windowWidth / 2, windowHeight / 2); // Position text in center of the screen<br>
+          h_score = (buttonState - 10); // Set high score <br>
+          playSynth('C5');<br>
+        }<br>
+        text(("High Score: " + String(h_score)), windowWidth / 2, 50); // Print the high score<br>
+      }<br>
+      <br>
+      // Three helper functions for managing the serial connection.<br>
+      <br>
+      function setupSerial() {<br>
+        port = createSerial();<br>
+        <br>
+        // Check to see if there are any ports we have used previously<br>
+        let usedPorts = usedSerialPorts();<br>
+        if (usedPorts.length > 0) {<br>
+          // If there are ports we've used, open the first one<br>
+          port.open(usedPorts[0], BAUD_RATE);<br>
+        }<br>
+        <br>
+        // create a connect button<br>
+        connectBtn = createButton("Connect to Arduino");<br>
+        connectBtn.position(5, 5); // Position the button in the top left of the screen.<br>
+        connectBtn.mouseClicked(onConnectButtonClicked); // When the button is clicked, run the onConnectButtonClicked function<br>
+      }<br>
+      <br>
+      function checkPort() {<br>
+        if (!port.opened()) {<br>
+          // If the port is not open, change button text<br>
+          connectBtn.html("Connect to Arduino");<br>
+          // Set background to gray<br>
+          background("gray");<br>
+          return false;<br>
+        } else {<br>
+          // Otherwise we are connected<br>
+          connectBtn.html("Disconnect");<br>
+          return true;<br>
+        }<br>
+      }<br>
+      <br>
+      function onConnectButtonClicked() {<br>
+        // When the connect button is clicked<br>
+        if (!port.opened()) {<br>
+          // If the port is not opened, we open it<br>
+          port.open(BAUD_RATE);<br>
+        } else {<br>
+          // Otherwise, we close it!<br>
+          port.close();<br>
+          mySound.stop();<br>
+        }<br>
+      }<br>
+      <br>
+      function playSynth(note) {<br>
+        // Begins audio for the user so sound can be played<br>
+        userStartAudio();<br>
+        <br>
+        // note velocity (volume, from 0 to 1)<br>
+        let velocity = 1;<br>
+        // time from now (in seconds)<br>
+        let time = 0;<br>
+        // note duration (in seconds)<br>
+        let dur = 1/4;<br>
+        <br>
+        // Play the note<br>
+        monoSynth.play(note, velocity, time, dur);<br>
+      }          
+      </p>
+      <hr>
+      <img src="MMpic.jpg" />
+      <p>Memory master has two main parts, the input, which comes from the arduino, and the output, 
+        which is displayed on the p5.js webpage. The webpage is constantly listening for signals from the 
+        arduino, and whenever it recieves one, its output changes accordingly. The arduino Serial prints 
+        output to the webpage whenever an LED blinks, or when a player wins or loses. The Arduino takes user 
+        input when it boots up to calibrate the touch sensors, it then generates a random sequence of 3 numbers 
+        between 2 and 5 which are saved to an array. The array is iterated through and the pin corresponding to 
+        the number is blinked, which causes the LED to blink. At the same time this number is sent as an 
+        input to the P5.js, which takes the input and displays the matching color and plays an associated tone. 
+        After the inital sequence it iterated through the first value in the array is loaded as the "answer", and the arduino loops
+        infinately waiting for user input on any of the touch sensors. The associated LED blinks when its snesor 
+        is touched and the output is Serial printed which changes the p5.js output. After any input is read the program 
+        checks if the touched sensor is the one that correlates to the "answer". If it doesnt match the player 
+        loses and the score and sequence length is reset after displayng a lose screen. If it does match the 
+        second value in the array becomes the "answer" and the process continues. If the entire array is 
+        iterated through without error the player recieves a win screen, their score is increased by one, and
+        the highscore is sent to the p5.js. Then the max length of the sequence is increased by one and the 
+        whole process begins all over again. <br>
+        <br>
+      </p>
+      <a href="https://drive.google.com/file/d/1TRfAmw2rvG6Y66wuO99CjPQDcuKBdhii/view?usp=drive_link">Memory Master Video Demo!</a>
